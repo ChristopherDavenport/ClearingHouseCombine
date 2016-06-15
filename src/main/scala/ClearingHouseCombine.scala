@@ -74,6 +74,38 @@ object ClearingHouseCombine extends App{
     }
   }
 
+  def parseStudentRecords(content: Seq[String], reversedFinalContent: Seq[String] = Seq[String](), count: Int = 1): Try[Seq[String]] = Try {
+
+    implicit class UntilSeqWrapper[T](seq: Seq[T]) {
+      def takeUntil(predicate: T => Boolean):Seq[T] = {
+        seq.span(predicate) match {
+          case (head, tail) => head ++ tail.take(1)
+        }
+      }
+
+      def dropUntil(predicate: T => Boolean):Seq[T] = {
+        seq.span(predicate) match {
+          case (head, tail) => tail.drop(1)
+        }
+      }
+    }
+
+
+
+    if (content.count(_.startsWith("ST|")) != content.count(_.startsWith("SE|"))) {
+      throw new Exception("Not an equal number of Student Record Openings(ST) and Closures(SE)")
+    }
+
+    val restOfContent = content.dropUntil(!_.startsWith("SE|"))
+    val nextStudent = content.takeUntil(!_.startsWith("SE|"))
+    println(nextStudent)
+
+
+    content
+
+
+  }
+
   /**
     * Takes header rows from first file, then removes header from all following. Removes 2 footer rows from all files,
     * then generates new footer row for combined
@@ -88,15 +120,16 @@ object ClearingHouseCombine extends App{
 
 
 
-    val firstContent = contentNoFooters.head
-    val noHeadersForAllExceptFirst = contentNoFooters.drop(1).flatMap(_.drop(2))
+    val header = contentNoFooters.head.take(2)
+    val noHeadersOrFootersContent = contentNoFooters.flatMap(_.drop(2))
+    val body = parseStudentRecords(noHeadersOrFootersContent)
 
     val footer = Seq(
       s"GE|$generalEnrollment|000000000",
       "IEA|1|000000000"
     )
 
-    val parsedContent = parseFileContent(firstContent ++ noHeadersForAllExceptFirst ++ footer)
+    val parsedContent = body.flatMap(body =>  parseFileContent(header ++ noHeadersOrFootersContent ++ footer))
 
     parsedContent.map { content =>
       ClearingHouseFile(
