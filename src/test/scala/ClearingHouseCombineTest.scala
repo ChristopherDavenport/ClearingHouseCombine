@@ -62,7 +62,7 @@ class ClearingHouseCombineTest extends FlatSpec with Matchers{
     assertResult(true){ parseBaseDir(args).isFailure}
   }
 
-  "getFiles" should "parse All Files Given with a -f flag" in {
+  "parseFileNames" should "parse All Files Given with a -f flag" in {
     val args = Array[String](
       "-b/home/test",
       "-fsfrnslc_1287591.txt",
@@ -75,7 +75,15 @@ class ClearingHouseCombineTest extends FlatSpec with Matchers{
       "sfrnslc_1287591.txt"
     )
 
-    getFiles(args) === expected
+    parseFileNames(args) === expected
+  }
+
+  it should "fail if no Files are supplied" in {
+    val args = Array[String](
+      "-b/home/test"
+    )
+
+    assertResult(true){ parseFileNames(args).isFailure}
   }
 
   "parseFileContent" should "succesfully parse FakeRes file" in {
