@@ -419,12 +419,12 @@ object ClearingHouseCombine extends App{
     */
   def run(arguments: Array[String]) = {
     val FinalFile = GenerateFile(arguments)
+    val WroteFile = FinalFile.flatMap(tryPrintToFile)
 
-    if (FinalFile isSuccess){
-      val WroteFile = FinalFile.flatMap(tryPrintToFile)
-      if (WroteFile isSuccess) println("Completed Successfully")
-    } else {
-      println(FinalFile)
+    if (WroteFile isSuccess) println("Completed Successfully")
+    else {
+      val message = WroteFile.failed.get.getMessage
+      println(s"Error: $message")
     }
 
   }
