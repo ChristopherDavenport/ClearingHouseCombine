@@ -4,8 +4,6 @@
 import org.scalatest.{FlatSpec, Matchers}
 import ClearingHouseCombine._
 
-import scala.util.Failure
-
 class ClearingHouseCombineTest extends FlatSpec with Matchers{
 
   "takeUntil" should "take up to and the value which satisfies the predicate with equals" in {

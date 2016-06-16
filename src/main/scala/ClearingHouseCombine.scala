@@ -100,6 +100,8 @@ object ClearingHouseCombine extends App{
   }
 
   /**
+    * This parses the file contents of the imported file and confirms that it matches the expected format of a Clearing
+    * House File, this stops erroneous files from going through the combination process.
     *
     * @param content This is the entire content of the file interpreted as a sequence of Strings
     * @return Either it returns the Sequence because it is valid or an error because it the file is not appropriately
