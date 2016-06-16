@@ -96,7 +96,7 @@ object ClearingHouseCombine extends App{
 
   /**
     * This is a function which attempts to get the File, which can fail due to IO errors etc. and then it parses that
-    * content so it only proceeds if all the consituent files are built correctly.
+    * content so it only proceeds if all the constituent files are built correctly.
     * @param fileName The name of the file to parse
     * @return The content of that file if it is valid
     */
@@ -161,7 +161,7 @@ object ClearingHouseCombine extends App{
       * start and stop individual student records so there need to be an equal amount of opening and closing tags.
       * @param content This is the content passed to the function parseStudentRecords, and each remaining set as it is
       *                removed through iterations through the function.
-      * @return A Succesfully validated Record or an Error indicating that the problem happened at this function.
+      * @return A Successfully validated Record or an Error indicating that the problem happened at this function.
       */
     def parseAllStudentRecords(content: Seq[String]): Try[Seq[String]] = Try{
       if (content.count(_.startsWith("ST|")) != content.count(_.startsWith("SE|"))) {
@@ -293,7 +293,7 @@ object ClearingHouseCombine extends App{
     * @param lines A String per line to write
     * @param location Where the file to be written should be
     * @param bufferSize The buffer size, to minimize IO delay
-    * @return A Try of Unit, which a Success meaning the file was written succesfully and a Failure meaning it was not,
+    * @return A Try of Unit, which a Success meaning the file was written successfully and a Failure meaning it was not,
     *         and containing what the error was.
     */
   def tryPrintToFile(
@@ -318,7 +318,7 @@ object ClearingHouseCombine extends App{
   /**
     * A Overloaded wrapper for tryPrintToFile above to take our our dataType ClearingHouseFile and writes that file.
     * @param clearingHouseFile A clearinghouseFile to be written
-    * @return A Try of Unit, which a Success meaning the file was written succesfully and a Failure meaning it was not,
+    * @return A Try of Unit, which a Success meaning the file was written successfully and a Failure meaning it was not,
     *         and containing what the error was.
     */
   def tryPrintToFile(clearingHouseFile: ClearingHouseFile): Try[Unit] = {
