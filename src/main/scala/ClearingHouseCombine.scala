@@ -10,6 +10,20 @@ object ClearingHouseCombine extends App{
   // This means the args Array is present as an array of strings which when invoking the file is invoked via command
   // line arguments
 
+  implicit class UntilSeqWrapper[T](seq: Seq[T]) {
+    def takeUntil(predicate: T => Boolean):Seq[T] = {
+      seq.span(predicate) match {
+        case (head, tail) => head ++ tail.take(1)
+      }
+    }
+
+    def dropUntil(predicate: T => Boolean):Seq[T] = {
+      seq.span(predicate) match {
+        case (head, tail) => tail.drop(1)
+      }
+    }
+  }
+
   case class ClearingHouseFile(fileName: String, content: Seq[String], generalEnrollment: Int)
 
   def parseBaseDir(arguments: Array[String]): Try[String] = {
@@ -74,35 +88,72 @@ object ClearingHouseCombine extends App{
     }
   }
 
-  def parseStudentRecords(content: Seq[String], reversedFinalContent: Seq[String] = Seq[String](), count: Int = 1): Try[Seq[String]] = Try {
+  def parseStudentRecords(content: Seq[String], finalContent: Seq[String] = Seq[String](), count: Int = 1): Try[Seq[String]] = {
 
-    implicit class UntilSeqWrapper[T](seq: Seq[T]) {
-      def takeUntil(predicate: T => Boolean):Seq[T] = {
-        seq.span(predicate) match {
-          case (head, tail) => head ++ tail.take(1)
-        }
+    def parseAllStudentRecords(content: Seq[String]): Try[Seq[String]] = Try{
+      if (content.count(_.startsWith("ST|")) != content.count(_.startsWith("SE|"))) {
+        throw new Exception("Not an equal number of Student Record Openings(ST) and Closures(SE)")
+      } else content
+    }
+
+    def parseStudentRecord(nextStudent: Seq[String]): Try[Seq[String]] = Try{
+
+      def parseStudentString(string: String): String = {
+        val formatted : String = f"$count%09d"
+        val newString: String = if (string.startsWith("ST|")){
+          val onlyImportantST = string.drop(3).takeWhile(_ != '|') + '|'
+          "ST|" + onlyImportantST + formatted
+        } else if (string.startsWith("SE|")) {
+          val onlyImportantSE = string.drop(3).takeWhile(_ != '|') + '|'
+          "SE|" + onlyImportantSE + formatted
+        } else if (string.startsWith("BGN|")) {
+          val beforeformatted = string.drop(4).takeWhile(_ != '|') + '|'
+          val afterformatted = string.drop(4).dropWhile(_ != '|').drop(1).dropWhile(_ != '|')
+          "BGN|" + beforeformatted + formatted + afterformatted
+        } else
+          string
+
+        newString
       }
 
-      def dropUntil(predicate: T => Boolean):Seq[T] = {
-        seq.span(predicate) match {
-          case (head, tail) => tail.drop(1)
-        }
+      if (nextStudent.count(_.startsWith("ST|")) != 1){
+        throw new Exception("A student Record is not formatted correctly - Expected : ST|")
       }
+      else if (nextStudent.count(_.startsWith("BGN|")) != 1) {
+        throw new Exception("A student Record is not formatted correctly - Expected : BGN|")
+      }
+      else if (nextStudent.count(_.startsWith("SE|")) != 1) {
+        throw new Exception("A student Record is not formatted correctly - Expected : SE|")
+      }
+      else nextStudent.map(parseStudentString)
     }
 
 
 
-    if (content.count(_.startsWith("ST|")) != content.count(_.startsWith("SE|"))) {
-      throw new Exception("Not an equal number of Student Record Openings(ST) and Closures(SE)")
+    val parsedContent = parseAllStudentRecords(content)
+
+    val restOfContent = parsedContent.map(_.dropUntil(!_.startsWith("SE|")))
+    val nextStudent = parsedContent.map(_.takeUntil(!_.startsWith("SE|")))
+
+    val parsedNextStudent = nextStudent.flatMap(parseStudentRecord)
+
+    if (parsedNextStudent.isSuccess ) {
+
+      val finishedStudent = parsedNextStudent.get
+      val finishedRestOfContent = restOfContent.get
+
+      val newFinalContent = finalContent ++ finishedStudent
+
+      if (finishedRestOfContent.isEmpty) {
+        Try(newFinalContent)
+      } else {
+        parseStudentRecords(finishedRestOfContent, newFinalContent, count +1 )
+      }
     }
-
-    val restOfContent = content.dropUntil(!_.startsWith("SE|"))
-    val nextStudent = content.takeUntil(!_.startsWith("SE|"))
-    println(nextStudent)
-
-
-    content
-
+    else {
+      println(parsedNextStudent)
+      parsedNextStudent
+    }
 
   }
 
@@ -129,7 +180,7 @@ object ClearingHouseCombine extends App{
       "IEA|1|000000000"
     )
 
-    val parsedContent = body.flatMap(body =>  parseFileContent(header ++ noHeadersOrFootersContent ++ footer))
+    val parsedContent = body.flatMap(body =>  parseFileContent(header ++ body ++ footer))
 
     parsedContent.map { content =>
       ClearingHouseFile(
