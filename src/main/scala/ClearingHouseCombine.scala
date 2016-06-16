@@ -238,6 +238,13 @@ object ClearingHouseCombine extends App{
 
   }
 
+  def generateFileName(schoolprefix: String, date: java.time.MonthDay): String = {
+    val formatter = java.time.format.DateTimeFormatter.ofPattern("MMdd")
+    val formatted = date.format(formatter)
+
+    schoolprefix + formatted + ".clr"
+  }
+
   /**
     * Takes header rows from first file, then removes header from all following. Removes 2 footer rows from all files,
     * then generates new footer row for combined
@@ -245,8 +252,8 @@ object ClearingHouseCombine extends App{
     * @param files These are the list of all parsed files from the command line arguments
     * @return This returns a single ClearingHouseFile with all the content combined correctly
     */
-  def combineIntoSingleFile(baseDir: String, files : Seq[ClearingHouseFile]): Try[ClearingHouseFile] = {
-    val filename =  baseDir + "sfrnslc_generated.txt"
+  def combineIntoSingleFile(baseDir: String, filename: String, files : Seq[ClearingHouseFile]): Try[ClearingHouseFile] = {
+    val fileName =  baseDir + filename
     val generalEnrollment = files.map(_.generalEnrollment).sum
     val contentNoFooters = files.map(_.content.takeWhile(!_.startsWith("GE|")))
 
@@ -265,7 +272,7 @@ object ClearingHouseCombine extends App{
 
     parsedContent.map { content =>
       ClearingHouseFile(
-        filename,
+        fileName,
         content,
         generalEnrollment
       )
@@ -336,7 +343,8 @@ object ClearingHouseCombine extends App{
     val files = getFiles(arguments)
     val baseDir = parseBaseDir(arguments)
     val FileContent = baseDir.flatMap(getAllFileContent(_, files))
-    val FinalFile = baseDir.flatMap(baseDir => FileContent.flatMap(combineIntoSingleFile(baseDir, _)))
+    val fileName = generateFileName("001487", java.time.MonthDay.now())
+    val FinalFile = baseDir.flatMap(baseDir => FileContent.flatMap(combineIntoSingleFile(baseDir, fileName, _)))
 
     FinalFile
   }

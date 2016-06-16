@@ -183,7 +183,10 @@ class ClearingHouseCombineTest extends FlatSpec with Matchers{
     val baseDir = "/home/test/"
     val t = Seq(pel, res)
 
-    assertResult(true){ combineIntoSingleFile(baseDir, t).isSuccess }
+    val testDate = java.time.MonthDay.of(6,1)
+    val filename = generateFileName("prefix", testDate)
+
+    assertResult(true){ combineIntoSingleFile(baseDir, filename, t).isSuccess }
   }
 
   it should "have a combined general enrollment equal to the sum of the files it is created from" in {
@@ -200,7 +203,10 @@ class ClearingHouseCombineTest extends FlatSpec with Matchers{
     val baseDir = "/home/test/"
     val t = Seq(pel, res)
 
-    combineIntoSingleFile(baseDir, t).get.generalEnrollment === pel.generalEnrollment + res.generalEnrollment
+    val testDate = java.time.MonthDay.of(6,1)
+    val filename = generateFileName("prefix", testDate)
+
+    combineIntoSingleFile(baseDir, filename, t).get.generalEnrollment === pel.generalEnrollment + res.generalEnrollment
   }
 
   it should "have an exact name based on baseDir" in {
@@ -217,8 +223,30 @@ class ClearingHouseCombineTest extends FlatSpec with Matchers{
     val baseDir = "/home/test/"
     val t = Seq(pel, res)
 
-    combineIntoSingleFile(baseDir, t).get.fileName === "/home/test/sfrnslc_generated.txt"
+    val testDate = java.time.MonthDay.of(6,1)
+    val filename = generateFileName("prefix", testDate)
+
+    combineIntoSingleFile(baseDir, filename, t).get.fileName === "/home/test/prefix0601.clr"
   }
+
+  "generateFileName" should "create a dynamic filename in MMdd" in {
+    val testDate = java.time.MonthDay.now()
+    val testDay = testDate.getDayOfMonth
+    val testMonth = testDate.getMonthValue
+
+    val prefix = "prefix"
+    val formattedEnd = f"$testMonth%02d" + f"$testDay%02d"
+
+    generateFileName(prefix, testDate) === s"$prefix$formattedEnd"
+  }
+
+  it should "generate an expected filename for a known date" in {
+    val testDate = java.time.MonthDay.of(6,1)
+    val prefix = "prefix"
+
+    generateFileName(prefix, testDate) === s"${prefix}0601.clr"
+  }
+
 
 
 
